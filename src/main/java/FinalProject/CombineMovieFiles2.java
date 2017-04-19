@@ -19,7 +19,7 @@ import java.util.Map;
 import java.util.StringTokenizer;
 
 /** @noinspection Duplicates */
-public class CombineMovieFiles {
+public class CombineMovieFiles2 {
 
     public static class CombineMovieMapper extends Mapper<Object, Text, Text, Text>{
         Map<Text, Text> titleMap;
@@ -60,7 +60,9 @@ public class CombineMovieFiles {
                     mapKey = new Text(current.substring(0, current.length()-1));
                 } else {
                     title = titleMap.get(mapKey);
-                    context.write(title, new Text(current));
+
+                    String output = line[0] + "," + mapKey + "," + line[1];
+                    context.write(title, new Text(output));
                 }
             }
         }
@@ -71,7 +73,7 @@ public class CombineMovieFiles {
         public void reduce(Text key, Iterable<Text> values, Context context)
                 throws IOException, InterruptedException {
             for(Text value : values){
-                context.write(null, new Text(key.toString() + "," + value.toString()));
+                context.write(null, new Text(value.toString()));
             }
         }
     }
