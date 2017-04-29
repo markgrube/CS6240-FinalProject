@@ -5,7 +5,6 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
-import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 
@@ -52,6 +51,7 @@ public class CombineMovieFiles {
             String current;
             StringTokenizer itr = new StringTokenizer(value.toString());
             Text title;
+            Text output;
 
             while (itr.hasMoreTokens()) {
                 current = itr.nextToken();
@@ -60,27 +60,18 @@ public class CombineMovieFiles {
                     mapKey = new Text(current.substring(0, current.length()-1));
                 } else {
                     title = titleMap.get(mapKey);
-                    context.write(title, new Text(current));
+                    output = new Text(title.toString() + "," + current);
+                    context.write(null, output);
                 }
             }
         }
     }
 
-    public static class CombineMovieReducer extends Reducer<Text,Text,Text,Text> {
-
-        public void reduce(Text key, Iterable<Text> values, Context context)
-                throws IOException, InterruptedException {
-            for(Text value : values){
-                context.write(null, new Text(key.toString() + "," + value.toString()));
-            }
-        }
-    }
-
-
     public static void main(String[] args) throws Exception {
         Configuration conf = new Configuration();
         Job job = Job.getInstance(conf, "finalproject");
         job.setJarByClass(CombineMovieFiles.class);
+        job.setNumReduceTasks(0);
 
         String s3File = args[0];
 
@@ -88,9 +79,6 @@ public class CombineMovieFiles {
 
         //Set Mapper Class
         job.setMapperClass(CombineMovieMapper.class);
-
-        //Set Reducer Class
-        job.setReducerClass(CombineMovieReducer.class);
 
         job.setOutputKeyClass(Text.class);
         job.setOutputValueClass(Text.class);
